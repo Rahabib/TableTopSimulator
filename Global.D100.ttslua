@@ -1,0 +1,60 @@
+local dieWatch = {
+    White = { D10 = false, D100 = false },
+    Brown = { D10 = false, D100 = false },
+    Red = { D10 = false, D100 = false },
+    Orange = { D10 = false, D100 = false },
+    Yellow = { D10 = false, D100 = false },    
+    Green = { D10 = false, D100 = false },
+    Teal = { D10 = false, D100 = false },
+    Blue = { D10 = false, D100 = false },
+    Purple = { D10 = false, D100 = false },
+    Pink = { D10 = false, D100 = false },
+    Grey = { D10 = false, D100 = false }, -- spectators
+    Black = { D10 = false, D100 = false } -- GM/DM
+}
+
+function onObjectRandomize(object, player_color)
+    -- get values object properties for dieWatch
+    local die = object.getName()
+    local guid = object.getGUID()
+    
+    -- if dice is not already in randomization process (prevents multiple broadcasts)
+    if not dieWatch[player_color][die] then
+        
+        dieWatch[player_color][die] = guid -- set diewatch to guid of die
+
+        -- wait for dice to be resting
+        local rollWatch = function() 
+           return object.resting
+        end
+        
+        -- roll has ended, get values and broadcast
+        local rollEnd = function() 
+            if (dieWatch[player_color].D100 != false and dieWatch[player_color].D10 != false) then
+                local d10 = getObjectFromGUID(dieWatch[player_color].D10)
+                local d100 = getObjectFromGUID(dieWatch[player_color].D100)
+                d10Result = d10.getRotationValue()
+                d100Result = d100.getRotationValue()
+                result = d100Result + d10Result
+                local commentary = ""
+                if(result > 96) then
+                    commentary = " Critical! "
+                end
+                if(result < 08) then
+                    commentary = " Fumble! "
+                end
+                if(result == 0) then
+                    result = 100
+                    commentary = " PERFECTION!!! "
+                end
+                broadcastToAll(Player[player_color].steam_name .. ' rolls: ' .. commentary .. result, player_color)
+                dieWatch[player_color].D10 = false
+                dieWatch[player_color].D100 = false
+            end
+        end
+        
+        -- Wait for rollWatch to be true then exec rollEnd
+        Wait.condition(rollEnd, rollWatch)
+        
+    end -- end dieWatch --
+end
