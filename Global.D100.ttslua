@@ -1,3 +1,8 @@
+-- Use:
+-- Import two D10 dice into your game.  Name one as D10 and the other as D100 (you can have multiple dice as well, just name them accordingly).
+-- Change the rotational value to the value you need (eg. the D100 needs to be 10, 20, 30, ... and 00 etc. and D10 needs to be 1, 2, 3 ... 0)
+-- When a player rolls both types of die, it will get the objects in randomization mode and wait for them to rest and then broadcast the result to everyone.
+
 local dieWatch = {
     White = { D10 = false, D100 = false },
     Brown = { D10 = false, D100 = false },
