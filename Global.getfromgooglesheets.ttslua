@@ -1,0 +1,43 @@
+-- works on script button press.  Proof of concept.
+
+local playerData = {}
+
+function onScriptingButtonUp(index, player_color)
+    print("downloading data")
+    url = "https://spreadsheets.google.com/feeds/cells/[YOURSPREADSHEETIDHERE]/1/public/full?alt=json"
+    WebRequest.get(
+        url, 
+        function(a)
+            json = JSON.decode(a.text)
+            processSS(json)
+        end
+    )
+end
+
+function processSS(json)
+    local data = json.feed["entry"]
+    local character = ""
+    local keyMap = {}
+    print("data download complete")
+    print("processing data")
+    for k,v in pairs(data) do 
+        if(tonumber(v["gs$cell"].row) == 1) then -- creat keymapping
+            if(tonumber(v["gs$cell"].col) != 1) then -- first col is characters, we dont store that key as its a table
+                map = tonumber(v["gs$cell"].col)
+                key = v["gs$cell"]["$t"]:gsub('%s+', ''):lower()
+                keyMap[map] = key
+            end
+        else
+            if(tonumber(v["gs$cell"].col) == 1) then -- first col is characters, we dont store that key as its a table
+                character = v["gs$cell"]["$t"]:gsub('%s+', ''):lower()
+                playerData[character] = {}
+            else
+                index = tonumber(v["gs$cell"].col)
+                local thiskey = keyMap[index]
+                playerData[character][thiskey] = v["gs$cell"]["$t"]:gsub('%s+', ''):lower()
+            end
+        end
+    end
+    print("processing complete")
+    print(playerData.sulime["1handededged"])
+end
