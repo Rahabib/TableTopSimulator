@@ -1,6 +1,19 @@
--- working version
 --[[ Lua code. See documentation: https://api.tabletopsimulator.com/ --]]
 --[[ The onLoad event is called after the game save finishes loading. --]]
+
+-- function onLoad()
+--     -- futureName = "Spawned By Script!"
+--     -- spawnParams = {
+--     --     type = "rpg_BEAR",
+--     --     position          = {x=0, y=3, z=-5},
+--     --     rotation          = {x=0, y=90, z=0},
+--     --     scale             = {x=2, y=2, z=2},
+--     --     sound             = false,
+--     --     snap_to_grid      = true,
+--     --     callback_function = function(obj) spawn_callback(obj, "Bear", "Green") end
+--     -- }
+--     -- spawnObject(spawnParams)
+-- end
 
 -- init vals
 local dieWatch = {
@@ -21,6 +34,16 @@ local playerData = {}
 
 function onLoad()
     downloadData()
+    createTableNote()
+end
+
+function createTableNote()
+    parameters = {
+        title = "Table",
+        body = "urlshere",
+        color = "Black"
+    }
+    Notes.addNotebookTab(parameters)    
 end
 
 function onObjectRandomize(object, player_color)
@@ -34,9 +57,20 @@ function onObjectRandomize(object, player_color)
         dieWatch[player_color][die] = guid -- set diewatch to guid of die
         
         -- wait for dice to be resting
-        -- TODO: this only waits for one die to be resting which results in false prints when one die is resting and the other is still rolling
         local rollWatch = function() 
-            return object.resting
+            dee10 = dieWatch[player_color].D10
+            dee100 = dieWatch[player_color].D100
+            if(dee10 != false and dee100 != false) then
+                dd10 = getObjectFromGUID(dee10)
+                dd100 = getObjectFromGUID(dee100)
+                if(dd100.resting == true and dd10.resting == true) then
+                    return true
+                else
+                    return false
+                end
+            else
+                return false
+            end
         end
         
         -- roll has ended, get values and broadcast
@@ -73,7 +107,21 @@ end
 
 -- manually redownload data
 function onScriptingButtonUp(index, player_color)
-    downloadData()
+    if(index == 9) then
+        downloadData()
+    else
+        local tablenote = getTableNote()
+        print(tablenote)
+    end
+end
+
+function getTableNote()
+    local notes = getNotebookTabs()
+    for i, t in ipairs(notes) do
+        if(t.title == "Table") then
+            return t.body
+        end
+    end
 end
 
 function downloadData()
@@ -115,4 +163,11 @@ function processSS(json)
     print("processing complete")
     print(playerData.sulime["obtype"])
     print("my attack bonus is: " .. playerData.sulime[playerData.sulime["obtype"]])
+end
+
+-- developer functions
+function printTable(a)
+    for i,line in ipairs(a) do
+        print(a)
+    end
 end
