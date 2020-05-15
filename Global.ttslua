@@ -1,20 +1,6 @@
 --[[ Lua code. See documentation: https://api.tabletopsimulator.com/ --]]
 --[[ The onLoad event is called after the game save finishes loading. --]]
 
--- function onLoad()
---     -- futureName = "Spawned By Script!"
---     -- spawnParams = {
---     --     type = "rpg_BEAR",
---     --     position          = {x=0, y=3, z=-5},
---     --     rotation          = {x=0, y=90, z=0},
---     --     scale             = {x=2, y=2, z=2},
---     --     sound             = false,
---     --     snap_to_grid      = true,
---     --     callback_function = function(obj) spawn_callback(obj, "Bear", "Green") end
---     -- }
---     -- spawnObject(spawnParams)
--- end
-
 -- init vals
 local dieWatch = {
     White = { D10 = false, D100 = false },
@@ -33,17 +19,28 @@ local dieWatch = {
 local playerData = {}
 
 function onLoad()
-    downloadData()
-    createTableNote()
+    -- downloadData()
+    -- createCharacterSheet()
+    createMat()
 end
 
-function createTableNote()
-    parameters = {
-        title = "Table",
-        body = "urlshere",
-        color = "Black"
-    }
-    Notes.addNotebookTab(parameters)    
+function createMat()
+    mat = spawnObject({
+        type = 'Custom_Tile',
+        position = {0, 0.96, 0},
+        rotation = {0, 0, 0},
+        scale = {16.5, 1, 18},
+        sound = false,
+        snap_to_grid = false
+    })
+        
+    mat.setCustomObject({
+        image = "https://i.imgur.com/N0O6aqj.jpg",
+        type = '0',
+        thickness = '0.10'
+    })
+    
+    mat.setLock(true)	
 end
 
 function onObjectRandomize(object, player_color)
@@ -92,8 +89,10 @@ function onObjectRandomize(object, player_color)
                     result = 100
                     commentary = " PERFECTION!!! "
                 end
-                local calculatedRoll = result + playerData.sulime[playerData.sulime["obtype"]] -- TODO: replace with skill once it can be determined
-                broadcastToAll(Player[player_color].steam_name .. ' rolls: ' .. commentary .. result .. '+ OB Modifier (' .. playerData.sulime[playerData.sulime["obtype"]] .. ') = ' .. calculatedRoll, player_color)
+                -- local calculatedRoll = result + playerData.sulime[playerData.sulime["obtype"]] -- TODO: replace with skill once it can be determined
+                local calculatedRoll = result -- TODO: replace with skill once it can be determined
+                -- broadcastToAll(Player[player_color].steam_name .. ' rolls: ' .. commentary .. result .. '+ OB Modifier (' .. playerData.sulime[playerData.sulime["obtype"]] .. ') = ' .. calculatedRoll, player_color)
+                broadcastToAll(Player[player_color].steam_name .. ' rolls: ' .. commentary .. " " .. calculatedRoll, player_color)
                 dieWatch[player_color].D10 = false
                 dieWatch[player_color].D100 = false
             end
@@ -107,26 +106,52 @@ end
 
 -- manually redownload data
 function onScriptingButtonUp(index, player_color)
-    if(index == 9) then
-        downloadData()
+    if (index == 9) then
+        local url = getPlayerNote(player_color)
+        downloadData(url)
     else
-        local tablenote = getTableNote()
-        print(tablenote)
+        createCharacterSheet(player_color)
     end
 end
 
-function getTableNote()
+function getPlayerNote(player_color)
     local notes = getNotebookTabs()
     for i, t in ipairs(notes) do
-        if(t.title == "Table") then
+        if(t.color == player_color and t.title == player_color) then
             return t.body
         end
     end
 end
 
-function downloadData()
+function checkCharacterSheetNote(player_color, steam_name)
+    local notes = getNotebookTabs()
+    local notecheck = false
+    for i, t in ipairs(notes) do
+        if(t.color == player_color and t.title == steam_name) then
+            notecheck = true
+        end
+    end
+    return notecheck
+end
+
+function createCharacterSheet(player_color)
+    local playerSheet = JSON.encode_pretty(playerData.sulime)
+    parameters = {
+        title = Player[player_color].steam_name,
+        body = playerSheet,
+        color = player_color
+    }
+    if(checkCharacterSheetNote(player_color, Player[player_color].steam_name) == false) then
+        Notes.addNotebookTab(parameters)    
+    else
+        Notes.editNotebookTab(parameters)
+    end
+    print("playerSheet Created")
+end
+
+function downloadData(url)
     print("downloading data")
-    url = "https://spreadsheets.google.com/feeds/cells/1lSgk-97LoCgOCiTWDOogWreuyg8F3wGgGMqfGMbEq7g/1/public/full?alt=json"
+    -- url = "https://spreadsheets.google.com/feeds/cells/1lSgk-97LoCgOCiTWDOogWreuyg8F3wGgGMqfGMbEq7g/1/public/full?alt=json"
     WebRequest.get(
         url, 
         function(a)
@@ -161,8 +186,8 @@ function processSS(json)
         end
     end
     print("processing complete")
-    print(playerData.sulime["obtype"])
-    print("my attack bonus is: " .. playerData.sulime[playerData.sulime["obtype"]])
+    -- print(playerData.sulime["obtype"])
+    -- print("my attack bonus is: " .. playerData.sulime[playerData.sulime["obtype"]])
 end
 
 -- developer functions
